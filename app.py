@@ -1,3 +1,9 @@
+"""
+This is main python file for student portal.
+It has all the functions to perform CRUD operations on student and class entity.
+"""
+import time
+import datetime
 from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
@@ -5,29 +11,30 @@ from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
-import time
-import datetime
+from flask_login import LoginManager, UserMixin, login_user, login_required
 import pymysql
 
 pymysql.install_as_MySQLdb()
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'Thisissupposedtobesecret!'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:pratiksha@localhost/mydb'
-bootstrap = Bootstrap(app)
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+APP = Flask(__name__)
+APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+APP.config['SECRET_KEY'] = 'secret'
+APP.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:pratiksha@localhost/entity'
+BOOTSTRAP = Bootstrap(APP)
+DB = SQLAlchemy(APP)
+LOGIN_MANAGER = LoginManager()
+LOGIN_MANAGER.init_app(APP)
+LOGIN_MANAGER.login_view = 'login'
 
 
-# creating user table
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(15), unique=True)
-    email = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(80))
+class User(UserMixin, DB.Model):
+    """
+    User class to create user table.
+    """
+    id = DB.Column(DB.Integer, primary_key=True)
+    username = DB.Column(DB.String(15), unique=True)
+    email = DB.Column(DB.String(50), unique=True)
+    password = DB.Column(DB.String(80))
 
     def __init__(self, username, email, password):
         self.username = username
@@ -35,34 +42,39 @@ class User(UserMixin, db.Model):
         self.password = password
 
 
+@LOGIN_MANAGER.user_loader
+def load_user(user_id):
+    """
+    Function to get user id
+    """
+    return User.query.get(int(user_id))
 
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(int(id))
 
-
-# get data from login page
 class LoginForm(FlaskForm):
+    """To get data from login form"""
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=80)])
     remember = BooleanField('remember me')
 
 
-# get data from login page
 class RegisterForm(FlaskForm):
+    """To get data from login form"""
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
-    email = StringField('email', validators=[InputRequired(), Email(message='Invalid email'), Length(max=50)])
+    email = StringField('email', validators=[InputRequired(),
+                                             Email(message='Invalid email'), Length(max=50)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=80)])
-    db.create_all()
+    DB.create_all()
 
 
-@app.route('/')
+@APP.route('/', methods=['GET', 'POST'])
 def index():
+    """Function for home page"""
     return render_template('index.html')
 
-# login
-@app.route('/login', methods=['GET', 'POST'])
+
+@APP.route('/login', methods=['GET', 'POST'])
 def login():
+    """To perform login operation"""
     form = LoginForm()
 
     if form.validate_on_submit():
@@ -77,29 +89,29 @@ def login():
     return render_template('login.html', form=form)
 
 
-# signup
-@app.route('/signup', methods=['GET', 'POST'])
+@APP.route('/signup', methods=['GET', 'POST'])
 def signup():
+    """To perform signup operation"""
     form = RegisterForm()
 
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data, method='sha256')
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
+        new_user = User(username=form.username.data, email=form.email.data,
+                        password=hashed_password)
+        DB.session.add(new_user)
+        DB.session.commit()
 
         return '<h1>New user has been created!</h1>'
-        # return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
     return render_template('signup.html', form=form)
 
 
-class Student(db.Model):
-    student_id = db.Column('id', db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    class_id = db.Column(db.Integer, db.ForeignKey('class.c_id'))
-    created_on = db.Column(db.String(50))
-    updated_on = db.Column(db.String(50))
-
+class Student(DB.Model):
+    """class to create student table"""
+    student_id = DB.Column('id', DB.Integer, primary_key=True)
+    name = DB.Column(DB.String(100), nullable=False)
+    class_id = DB.Column(DB.Integer, DB.ForeignKey('class.c_id'))
+    created_on = DB.Column(DB.String(50))
+    updated_on = DB.Column(DB.String(50))
     # clas = db.relationship('Class', backref='student', lazy=True)
 
     def __init__(self, student_id, name, class_id, created_on, updated_on):
@@ -110,13 +122,13 @@ class Student(db.Model):
         self.updated_on = updated_on
 
 
-class Class(db.Model):
-    c_id = db.Column(db.Integer, primary_key=True)
-    c_name = db.Column(db.String(100))
-    c_leader = db.Column(db.Integer, db.ForeignKey('student.id'))
-    created_on = db.Column(db.String(50))
-    updated_on = db.Column(db.String(50))
-
+class Class(DB.Model):
+    """class to create class table"""
+    c_id = DB.Column(DB.Integer, primary_key=True)
+    c_name = DB.Column(DB.String(100), nullable=False)
+    c_leader = DB.Column(DB.Integer, DB.ForeignKey('student.id'))
+    created_on = DB.Column(DB.String(50))
+    updated_on = DB.Column(DB.String(50))
     # students = db.relationship('Student', backref='class', lazy=True)
 
     def __init__(self, c_id, c_name, c_leader, created_on, updated_on):
@@ -125,107 +137,127 @@ class Class(db.Model):
         self.c_leader = c_leader
         self.created_on = created_on
         self.updated_on = updated_on
-        db.create_all()
 
 
-@app.route('/show_all')
+@APP.route('/show_all', methods=['POST', 'GET'])
 @login_required
 def show_all():
+    """function to display all student's data"""
     return render_template('show_all.html', student=Student.query.all())
 
 
-# creating new student data
-@app.route('/new_student', methods=['POST'])
-def new_student():
+@APP.route('/adding_class', methods=['POST'])
+def new_class():
+    """Function to create new class"""
     if request.method == 'POST':
         print("Inside POST")
         try:
-            studentId = request.form.get("studentId")
+            class_id = request.form.get("class_id")
+            class_name = request.form.get("class_name")
+            time_stamp = time.time()
+            timestamp = datetime.datetime.fromtimestamp(time_stamp)
+            date_add = timestamp
+            cls = Class(c_id=class_id, c_name=class_name, c_leader=None,
+                        created_on=date_add, updated_on=date_add)
+            DB.session.add(cls)
+            DB.session.commit()
+            return '<h1>New class has been created!</h1>'
+        except IOError:
+            msg = "Error while adding new class"
+            print(msg)
+            return '<h1>Error while adding new class</h1>'
+    return render_template('show_all.html', student=Student.query.all())
+
+
+@APP.route("/new_class", methods=["GET", "POST"])
+def add_class():
+    """To add new class"""
+    return render_template("new_class.html", clss=Class.query.all())
+
+
+@APP.route('/new_student', methods=['POST'])
+def new_student():
+    """To add new student"""
+    if request.method == 'POST':
+        print("Inside POST")
+        try:
+            student_id = request.form.get("student_id")
             name = request.form.get("name")
-            classId = request.form.get("classId")
-            cName = request.form.get("cName")
-            ts = time.time()
-            timestamp = datetime.datetime.fromtimestamp(ts)
-            dateadd = timestamp
-            new_stud = Student(studentId, name, classId, dateadd, dateadd)
-            db.session.add(new_stud)
-            db.session.commit()
+            class_id = request.form.get("class_id")
+            time_stamp = time.time()
+            timestamp = datetime.datetime.fromtimestamp(time_stamp)
+            date_add = timestamp
+            new_stud = Student(student_id, name, class_id, date_add, date_add)
+            DB.session.add(new_stud)
+            DB.session.commit()
             c_leader = request.form.get("c_leader")
             if c_leader == "yes":
-                c_leader = studentId
-                new_class = Class(classId, cName, c_leader, dateadd, dateadd)
-                db.session.add(new_class)
-                db.session.commit()
-            else:
-                new_class = Class(c_id=classId,c_name=cName, created_on=dateadd, updated_on=dateadd)
-                db.session.add(new_class)
-                db.session.commit()
-
-
-        except:
+                c_update = Class.query.filter_by(c_id=class_id).first()
+                c_update.c_leader = student_id
+                c_update.updated_on = date_add
+                DB.session.add(c_update)
+                DB.session.commit()
+        except IOError:
             msg = "Error while adding new student"
             print(msg)
     return render_template('show_all.html', student=Student.query.all())
 
 
-# Add a new student record
-@app.route("/add_new_student", methods=["GET", "POST"])
+@APP.route("/add_new_student", methods=["GET", "POST"])
 def add():
+    """Add student function"""
     return render_template("new_student.html", clss=Class.query.all())
 
 
-# update student data
-@app.route('/update', methods=['POST'])
+@APP.route('/update', methods=['POST'])
 def update():
+    """To perform update operation"""
     if request.method == 'POST':
-        student_id = request.form.get("studentId")
-        sUpdate = Student.query.filter_by(student_id=student_id).first()
-        newName = request.form.get("newName")
-        classId = request.form.get("classId")
-        cUpdate = Class.query.filter_by(c_id=classId).first()
-        sUpdate.name = newName
-        sUpdate.class_id = classId
-        ts = time.time()
-        timestamp = datetime.datetime.fromtimestamp(ts)
-        sUpdate.updated_on = timestamp
-        cUpdate.updated_on = timestamp
-        db.session.add(sUpdate)
-        db.session.add(cUpdate)
-        db.session.commit()
+        print("Inside Post")
+        try:
+            student_id = request.form.get("studentId")
+            s_update = Student.query.filter_by(student_id=student_id).first()
+            new_name = request.form.get("new_name")
+            class_id = request.form.get("class_id")
+            c_update = Class.query.filter_by(c_id=class_id).first()
+            s_update.name = new_name
+            s_update.class_id = class_id
+            time_stamp = time.time()
+            timestamp = datetime.datetime.fromtimestamp(time_stamp)
+            s_update.updated_on = timestamp
+            c_update.updated_on = timestamp
+            DB.session.add(s_update)
+            DB.session.add(c_update)
+            DB.session.commit()
+        except IOError:
+            msg = "Error while updating"
+            print(msg)
+            return '<h1>Error while updating data</h1>'
     return redirect(url_for('show_all'))
 
 
-# Perform Update Operation
-@app.route('/updatedata', methods=["POST"])
-def updatedata():
+@APP.route('/update_data', methods=["POST"])
+def update_data():
+    """Function to perfom update operation"""
     student_id = request.form.get("id")
-    sUpdate = Student.query.filter_by(student_id=student_id).first()
-    return render_template("updatedata.html", student=sUpdate, cls=Class.query.all())
+    s_update = Student.query.filter_by(student_id=student_id).first()
+    return render_template("update_data.html", student=s_update, cls=Class.query.all())
 
 
-# Perform Delete Operation
-@app.route("/delete", methods=["POST"])
+@APP.route("/delete", methods=["POST"])
 def delete():
+    """To perform delete operation"""
     student_id = request.form.get("id")
     student = Student.query.filter_by(student_id=student_id).first()
     try:
-        db.session.delete(student)
-        db.session.commit()
+        DB.session.delete(student)
+        DB.session.commit()
         return redirect(url_for('show_all'))
-    except:
+    except IOError:
         msg = "error during update operation"
         print(msg)
-        return redirect(url_for('show_all'))
-
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
-    db.create_all()
-    app.run(debug=True)
-
+    DB.create_all()
+    APP.run(debug=True)

@@ -13,7 +13,10 @@ Demo App
 <h3>Student data</h3>
 <table class="table table-striped table-bordered">
     <form method="POST" action="./add_new_student" style="display: inline">
-        <input class="btn btn-success pull-right" type="submit" value="ADD">
+        <input class="btn btn-success" type="submit" value="Add Student">
+    </form>
+    <form method="POST" action="./new_class" style="display: inline">
+        <input class="btn btn-success" type="submit" value="Add Class">
     </form>
   <thead class="thead-dark">
     <tr>
@@ -34,7 +37,7 @@ Demo App
         <td>{{ s.created_on }}</td>
         <td>{{ s.updated_on }}</td>
         <td>
-        <form method="POST" action="./updatedata" style="display: inline">
+        <form method="POST" action="./update_data" style="display: inline">
             <input type="hidden" value="{{s.name}}" name="name">
             <input type="hidden" value="{{s.student_id}}" name="id">
             <input type="hidden" value="{{s.class_id}}" name="class_id">
