@@ -27,6 +27,7 @@ LOGIN_MANAGER.init_app(APP)
 LOGIN_MANAGER.login_view = 'login'
 
 
+# class User to create user table
 class User(UserMixin, DB.Model):
     """
     User class to create user table.
@@ -42,6 +43,7 @@ class User(UserMixin, DB.Model):
         self.password = password
 
 
+# Function to load user
 @LOGIN_MANAGER.user_loader
 def load_user(user_id):
     """
@@ -50,6 +52,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# Class Login form to get data from login page
 class LoginForm(FlaskForm):
     """To get data from login form"""
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
@@ -57,6 +60,7 @@ class LoginForm(FlaskForm):
     remember = BooleanField('remember me')
 
 
+# Class Register form to get data from Register page
 class RegisterForm(FlaskForm):
     """To get data from login form"""
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
@@ -66,12 +70,14 @@ class RegisterForm(FlaskForm):
     DB.create_all()
 
 
+# Function for home page
 @APP.route('/', methods=['GET', 'POST'])
 def index():
     """Function for home page"""
     return render_template('index.html')
 
 
+# To perform login
 @APP.route('/login', methods=['GET', 'POST'])
 def login():
     """To perform login operation"""
@@ -89,6 +95,7 @@ def login():
     return render_template('login.html', form=form)
 
 
+# To perform signup
 @APP.route('/signup', methods=['GET', 'POST'])
 def signup():
     """To perform signup operation"""
@@ -139,6 +146,7 @@ class Class(DB.Model):
         self.updated_on = updated_on
 
 
+# To display all students
 @APP.route('/show_all', methods=['POST', 'GET'])
 @login_required
 def show_all():
@@ -146,6 +154,7 @@ def show_all():
     return render_template('show_all.html', student=Student.query.all())
 
 
+# To add new class
 @APP.route('/adding_class', methods=['POST'])
 def new_class():
     """Function to create new class"""
@@ -175,6 +184,7 @@ def add_class():
     return render_template("new_class.html", clss=Class.query.all())
 
 
+# To add new student
 @APP.route('/new_student', methods=['POST'])
 def new_student():
     """To add new student"""
@@ -200,6 +210,7 @@ def new_student():
         except IOError:
             msg = "Error while adding new student"
             print(msg)
+            return '<h1>Error while adding new student</h1>'
     return render_template('show_all.html', student=Student.query.all())
 
 
@@ -209,6 +220,7 @@ def add():
     return render_template("new_student.html", clss=Class.query.all())
 
 
+# To perform update operation
 @APP.route('/update', methods=['POST'])
 def update():
     """To perform update operation"""
@@ -244,6 +256,7 @@ def update_data():
     return render_template("update_data.html", student=s_update, cls=Class.query.all())
 
 
+# To perform delete operation
 @APP.route("/delete", methods=["POST"])
 def delete():
     """To perform delete operation"""
@@ -254,8 +267,9 @@ def delete():
         DB.session.commit()
         return redirect(url_for('show_all'))
     except IOError:
-        msg = "error during update operation"
+        msg = "error during delete operation"
         print(msg)
+        return '<h1>Sorry! Cannot delete parent row</h1>'
 
 
 if __name__ == '__main__':
