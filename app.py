@@ -4,7 +4,7 @@ It has all the functions to perform CRUD operations on student and class entity.
 """
 import time
 import datetime
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField
@@ -136,6 +136,7 @@ class Class(DB.Model):
     c_leader = DB.Column(DB.Integer, DB.ForeignKey('student.id'))
     created_on = DB.Column(DB.String(50))
     updated_on = DB.Column(DB.String(50))
+    parent = DB.relationship('Student', cascade="all,delete", foreign_keys=c_leader, backref="class")
     # students = db.relationship('Student', backref='class', lazy=True)
 
     def __init__(self, c_id, c_name, c_leader, created_on, updated_on):
@@ -250,7 +251,7 @@ def update():
 
 @APP.route('/update_data', methods=["POST"])
 def update_data():
-    """Function to perfom update operation"""
+    """Function to perform update operation"""
     student_id = request.form.get("id")
     s_update = Student.query.filter_by(student_id=student_id).first()
     return render_template("update_data.html", student=s_update, cls=Class.query.all())
@@ -269,7 +270,13 @@ def delete():
     except IOError:
         msg = "error during delete operation"
         print(msg)
-        return '<h1>Sorry! Cannot delete parent row</h1>'
+        flash('sorry! cannot delete parent row')
+
+
+@APP.route('/logout')
+@login_required
+def logout():
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':

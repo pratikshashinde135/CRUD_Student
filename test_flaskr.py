@@ -28,35 +28,35 @@ dict_login = {
     "password": "pratiksha"
 }
 dict_new_class = {
-    "class_id": 5,
+    "class_id": 4,
     "class_name": "B"
 }
 dict_new_student = {
-    "student_id": 5,
+    "student_id": 1,
     "name": "harsh",
     "class_id": 1,
     "c_leader": "no",
 }
 dict_new_student2 = {
-    "student_id": 104,
+    "student_id": 2,
     "name": "shree",
     "class_id": 1,
     "c_leader": "yes",
 }
 dict_update = {
-    "studentId": 3,
-    "new_name": "Prakash",
+    "studentId": 5,
+    "new_name": "rahul",
     "class_id": 1
 }
 
 dict_update2 = {
-    "studentId": 4,
+    "studentId": 6,
     "new_name": "Prabha",
     "class_id": 2
 }
 
 dict_delete = {
-    "id": 103
+    "id": 5
 }
 
 
@@ -148,4 +148,6 @@ def test_login(test_resp_code):
     xyz = test_resp_code
     resp = xyz.post('/login', data=dict_login)
     assert resp.status_code == 200
+
+
 
