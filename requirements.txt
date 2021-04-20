@@ -29,7 +29,7 @@ more-itertools==5.0.0
 mysql==0.0.2
 mysqlclient==1.3.14
 pluggy==0.8.1
-py==1.7.0
+py==1.10.0
 pylint==2.2.2
 PyMySQL==0.9.3
 PyMysqlDB==0.0.2
